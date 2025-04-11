@@ -1,6 +1,8 @@
+// js/config.js
+
 // 全局常量配置
 
-const PROXY_URL = 'https://cors.zme.ink/';
+const PROXY_URL = '/proxy/'; // 使用相对路径指向内部代理功能
 const HOPLAYER_URL = 'https://hoplayer.com/index.html';
 const SEARCH_HISTORY_KEY = 'videoSearchHistory';
 const MAX_HISTORY_ITEMS = 5;
@@ -8,7 +10,7 @@ const MAX_HISTORY_ITEMS = 5;
 // 网站信息配置
 const SITE_CONFIG = {
     name: 'LibreTV',
-    url: 'https://libretv.is-an.org',
+    url: 'https://libretv.is-an.org', // 您可以改成您的实际部署地址
     description: '免费在线视频搜索与观看平台',
     logo: 'https://images.icon-icons.com/38/PNG/512/retrotv_5520.png',
     version: '1.0.0'
@@ -55,6 +57,7 @@ const API_SITES = {
         api: 'https://dbzy.com',
         name: '豆瓣资源',
     }
+    // 您可以按需添加更多源
 };
 
 // 添加聚合搜索的配置选项
@@ -69,7 +72,6 @@ const AGGREGATED_SEARCH_CONFIG = {
 // 抽象API请求配置
 const API_CONFIG = {
     search: {
-        // 修改搜索接口为返回更多详细数据（包括视频封面、简介和播放列表）
         path: '/api.php/provide/vod/?ac=videolist&wd=',
         headers: {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
@@ -77,7 +79,6 @@ const API_CONFIG = {
         }
     },
     detail: {
-        // 修改详情接口也使用videolist接口，但是通过ID查询，减少请求次数
         path: '/api.php/provide/vod/?ac=videolist&ids=',
         headers: {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
@@ -99,9 +100,9 @@ const PLAYER_CONFIG = {
     width: '100%',
     height: '600',
     timeout: 15000,  // 播放器加载超时时间
-    filterAds: true,  // 是否启用广告过滤
+    filterAds: true,  // 是否启用广告过滤 (这个过滤由 player.html 实现)
     autoPlayNext: true,  // 默认启用自动连播功能
-    adFilteringEnabled: true, // 默认开启分片广告过滤
+    adFilteringEnabled: true, // 默认开启分片广告过滤 (这个由 player.html 或下面的代理功能实现)
     adFilteringStorage: 'adFilteringEnabled' // 存储广告过滤设置的键名
 };
 
@@ -119,9 +120,10 @@ const SECURITY_CONFIG = {
     enableXSSProtection: true,  // 是否启用XSS保护
     sanitizeUrls: true,         // 是否清理URL
     maxQueryLength: 100,        // 最大搜索长度
-    allowedApiDomains: [        // 允许的API域名
+    allowedApiDomains: [        // （此配置在此方案中作用不大，因为代理是内部的）
         'heimuer.xyz',
         'ffzy5.tv'
+        // ... 其他您信任的API域名
     ]
 };
 
@@ -132,6 +134,28 @@ const CUSTOM_API_CONFIG = {
     testTimeout: 5000,        // 测试超时时间(毫秒)
     namePrefix: 'Custom-',    // 自定义源名称前缀
     validateUrl: true,        // 验证URL格式
-    cacheResults: true,       // 缓存测试结果
-    cacheExpiry: 5184000000   // 缓存过期时间(2个月)
+    cacheResults: true,       // 缓存测试结果 (针对 testCustomApiUrl 函数)
+    cacheExpiry: 5184000000   // 缓存过期时间(2个月) (针对 testCustomApiUrl 函数)
 };
+
+
+// --- 内部代理功能配置 (从 workers1.js 适配而来) ---
+const FUNCTION_CONFIG = {
+    CACHE_TTL: 86400,             // 缓存有效期（秒，这里是24小时）
+    MAX_RECURSION: 5,             // 处理嵌套M3U8时的最大递归层数
+    FILTER_DISCONTINUITY: true,   // 是否过滤M3U8中的 #EXT-X-DISCONTINUITY 标记
+    USER_AGENTS: [                // 访问外部资源时使用的浏览器标识
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15'
+    ],
+    DEBUG: false                  // 是否在Cloudflare控制台输出调试日志
+};
+
+// 内部代理功能需要识别的媒体文件扩展名和类型
+const MEDIA_FILE_EXTENSIONS = [
+    '.mp4', '.webm', '.mkv', '.avi', '.mov', '.wmv', '.flv', '.f4v', '.m4v', '.3gp', '.3g2', '.ts', '.mts', '.m2ts',
+    '.mp3', '.wav', '.ogg', '.aac', '.m4a', '.flac', '.wma', '.alac', '.aiff', '.opus',
+    '.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.tiff', '.svg', '.avif', '.heic'
+];
+const MEDIA_CONTENT_TYPES = ['video/', 'audio/', 'image/'];
+// --- 内部代理功能配置结束 ---
