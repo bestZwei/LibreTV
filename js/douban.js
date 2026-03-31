@@ -501,6 +501,12 @@ async function fetchDoubanData(url) {
 
 // 抽取渲染豆瓣卡片的逻辑到单独函数
 function renderDoubanCards(data, container) {
+    // 预获取 auth hash，用于图片 onerror fallback 的代理 URL
+    // window.__ENV__.PASSWORD 由服务端渲染注入（SHA256 hash），始终可用
+    const authHash = (window.__ENV__?.PASSWORD)
+        || localStorage.getItem('proxyAuthHash')
+        || '';
+
     // 创建文档片段以提高性能
     const fragment = document.createDocumentFragment();
     
@@ -532,8 +538,11 @@ function renderDoubanCards(data, container) {
             // 1. 直接使用豆瓣图片URL (添加no-referrer属性)
             const originalCoverUrl = item.cover;
             
-            // 2. 也准备代理URL作为备选
-            const proxiedCoverUrl = PROXY_URL + encodeURIComponent(originalCoverUrl);
+            // 2. 也准备代理URL作为备选（附带 auth 参数避免鉴权失败）
+            const baseProxiedUrl = PROXY_URL + encodeURIComponent(originalCoverUrl);
+            const proxiedCoverUrl = authHash
+                ? baseProxiedUrl + '?auth=' + encodeURIComponent(authHash)
+                : baseProxiedUrl;
             
             // 为不同设备优化卡片布局
             card.innerHTML = `

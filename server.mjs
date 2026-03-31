@@ -184,7 +184,8 @@ app.get('/proxy/:encodedUrl', async (req, res) => {
           responseType: 'stream',
           timeout: config.timeout,
           headers: {
-            'User-Agent': config.userAgent
+            'User-Agent': config.userAgent,
+            'Referer': new URL(targetUrl).origin + '/'
           }
         });
       } catch (error) {
